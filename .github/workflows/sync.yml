@@ -1,4 +1,4 @@
-name: Sync Upstream from AxionAOSP
+name: Sync Upstream Source from AxionAOSP
 
 on:
   schedule:
@@ -7,15 +7,16 @@ on:
 
 jobs:
   sync:
-    name: Sync with upstream AxionAOSP
+    name: Sync Source with upstream AxionAOSP
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-      - name: Checkout repository
+      - name: Checkout source branch
         uses: actions/checkout@v4
         with:
+          ref: source
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -27,17 +28,15 @@ jobs:
       - name: Add and fetch upstream
         run: |
           git remote add upstream https://github.com/AxionAOSP/android_packages_apps_AxionFx.git
-          git fetch upstream
+          git fetch upstream lineage-23.2
 
-      - name: Merge upstream changes
+      - name: Merge upstream changes into source
         run: |
-          BRANCH=$(git branch --show-current)
-          echo "Current branch is $BRANCH"
-          if git merge upstream/$BRANCH --ff-only; then
+          if git merge upstream/lineage-23.2 --ff-only; then
             echo "Fast-forward merge successful!"
-            git push origin $BRANCH
+            git push origin source
           else
             echo "Fast-forward not possible, merging with commit..."
-            git merge upstream/$BRANCH -m "chore: sync upstream changes from AxionAOSP"
-            git push origin $BRANCH
+            git merge upstream/lineage-23.2 -m "chore: sync upstream changes from AxionAOSP"
+            git push origin source
           fi
