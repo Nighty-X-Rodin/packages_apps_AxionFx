@@ -1,0 +1,43 @@
+name: Sync Upstream from AxionAOSP
+
+on:
+  schedule:
+    - cron: '0 4 * * *' # Runs daily at 04:00 UTC
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  sync:
+    name: Sync with upstream AxionAOSP
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Add and fetch upstream
+        run: |
+          git remote add upstream https://github.com/AxionAOSP/android_packages_apps_AxionFx.git
+          git fetch upstream
+
+      - name: Merge upstream changes
+        run: |
+          BRANCH=$(git branch --show-current)
+          echo "Current branch is $BRANCH"
+          if git merge upstream/$BRANCH --ff-only; then
+            echo "Fast-forward merge successful!"
+            git push origin $BRANCH
+          else
+            echo "Fast-forward not possible, merging with commit..."
+            git merge upstream/$BRANCH -m "chore: sync upstream changes from AxionAOSP"
+            git push origin $BRANCH
+          fi
